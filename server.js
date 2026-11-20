@@ -60,14 +60,31 @@ app.post('/api/chat', async (req, res) => {
 
     history.push({ role: 'user', parts: [{ text: message }] });
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-4-hydrogen',
-      contents: history,
-      config: {
-        systemInstruction: instructions,
-        maxOutputTokens: 500
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.8-flash'];
+    let response;
+    let lastError;
+
+    for (const modelName of modelsToTry) {
+      try {
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: history,
+          config: {
+            systemInstruction: instructions,
+            maxOutputTokens: 500
+          }
+        });
+        break;
+      } catch (err) {
+        lastError = err;
+        const msg = String(err?.message || '');
+        if (err?.status !== 503 && err?.status !== 404 && !msg.includes('503') && !msg.includes('404')) {
+          throw err;
+        }
       }
-    });
+    }
+
+    if (!response) throw lastError;
 
     const answer = response.text || 'No pude generar una respuesta. Inténtalo de nuevo.';
     history.push({ role: 'model', parts: [{ text: answer }] });
