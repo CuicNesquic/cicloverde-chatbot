@@ -61,7 +61,7 @@ app.post('/api/chat', async (req, res) => {
     history.push({ role: 'user', parts: [{ text: message }] });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: 'gemini-4-hydrogen',
       contents: history,
       config: {
         systemInstruction: instructions,
